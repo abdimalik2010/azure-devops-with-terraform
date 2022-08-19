@@ -36,7 +36,7 @@ variable "admin_username" {
 
 # SSH Public Key for Linux VMs
 variable "ssh_public_key" {
-  default     = "./ssh-rsa"
+  #default     = "./ssh-rsa"
   description = "This variable defines the SSH Public Key for Linux k8s Worker nodes"
 }
 
