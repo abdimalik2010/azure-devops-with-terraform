@@ -65,7 +65,6 @@ stages:
         displayName: Deploy cluster
         pool:
           vmImage: "ubuntu-latest"
-        variables: $(DEV_ENV)
         strategy:
          runOnce:
            deploy:
