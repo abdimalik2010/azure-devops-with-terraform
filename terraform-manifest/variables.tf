@@ -21,7 +21,7 @@ variable "resource_group_name" {
 variable "env" {
   type        = string
   description = "This variable defines the Environment"
-  default     = "dev"
+  #default     = "dev"
 }
 
 
