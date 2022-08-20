@@ -6,7 +6,12 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-# Define variables
+## Step-1: Define Variables for environments
+variables:
+- name: DEV-ENV
+  value: dev
+- name: Qa-Env
+  value: qa
 
 # Stage-1: Terraform Validate Stage
 stages:
@@ -41,7 +46,7 @@ stages:
               backendAzureRmResourceGroupName: 'terraform-backend'
               backendAzureRmStorageAccountName: 'kroostorage'
               backendAzureRmContainerName: 'terraformkroo'
-              backendAzureRmKey: 'devopsterraform.tfs'
+              backendAzureRmKey: 
               allowTelemetryCollection: false
 
           - task: TerraformCLI@0
@@ -50,3 +55,56 @@ stages:
                 command: 'validate'
                 workingDirectory: '$(System.DefaultWorkingDirectory)/terraform-manifest'
                 allowTelemetryCollection: false
+                      
+# Stage-2: Deploy Stages for Dev & QA
+# Deployment-1: Deploy Dev AKS Cluster
+
+  - stage: Deploy-cluster
+    jobs:
+      - deployment: deploycluster
+        displayName: Deploy cluster
+        pool:
+          vmImage: "ubuntu-latest"
+        variables: $(DEV_ENV)
+        strategy:
+         runOnce:
+           deploy:
+           ## Step-2: Download SSH Secure File
+             steps:
+             - task: DownloadSecureFile@1
+               displayName: Download SSH Key
+               name: sshkey
+               inputs:
+                  secureFile: 'aks-terraform-devops-ssh-key-ububtu.pub'
+
+             - task: TerraformCLI@0
+               displayName: Terraform Init
+               inputs:
+                    command: 'init'
+                    workingDirectory: '$(Pipeline.Workspace)/terraform-manifest-out'
+                    backendType: 'azurerm'
+                    backendServiceArm: 'devops-terraform-sp-conn'
+                    backendAzureRmSubscriptionId: '734b7b12-0396-4702-a8c6-f553ea8663fc'
+                    backendAzureRmResourceGroupName: 'terraform-backend'
+                    backendAzureRmStorageAccountName: 'kroostorage'
+                    backendAzureRmContainerName: 'terraformkroo'
+                    backendAzureRmKey: '$(DEV-ENV)-devopsterraform.tfs'
+                    allowTelemetryCollection: false
+
+             - task: TerraformCLI@0
+               displayName: Terraform Plan
+               inputs:
+                      command: 'plan'
+                      workingDirectory: '$(Pipeline.Workspace)/terraform-manifest-out'
+                      commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var env=$(DEV_ENV) -out $(Pipeline.Workspace)/terraform-manifest-out/$(DEV_ENV)-$(Build.BuildId).out'
+                      allowTelemetryCollection: false
+             - task: TerraformCLI@0
+               inputs:
+                command: 'apply'
+                workingDirectory: '$(Pipeline.Workspace)/terraform-manifest-out'
+                commandOptions: '-var ssh_public_key=$(sshkey.secureFilePath) -var env=$(DEV_ENV) -out $(Pipeline.Workspace)/terraform-manifest-out/$(DEV_ENV)-$(Build.BuildId).out'
+                allowTelemetryCollection: false
+            
+  
+   
+
