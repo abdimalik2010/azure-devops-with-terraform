@@ -58,14 +58,4 @@ variable "petcount" {
   default = 0303
 }
 
-variable "Datasource" {
-  sensitive = true
-  default   = "23d51826-eab0-4218-90ac-caf75c178351"
 
-}
-
-variable "client_secret" {
-  sensitive = true
-  default   = "5a_8Q~2al5Aisb2ccIU-WiooPmh9tI3qg6nHrbFl"
-
-}
